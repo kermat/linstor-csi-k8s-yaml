@@ -10,7 +10,7 @@ Note that this is not a production configuration. In particular, MySQL settings 
 
 Create the ConfigMap from the `mysql-configmap.yaml` YAML configuration file:
 ```
-kubectl create -f mysql-configmap.yaml
+$ kubectl create -f mysql-configmap.yaml
 ```
 
 This ConfigMap provides `my.cnf` overrides that let you independently control configuration on the MySQL master and slaves. In this case, you want the master to be able to serve replication logs to slaves and you want slaves to reject any writes that don’t come via replication.
@@ -21,7 +21,7 @@ There’s nothing special about the ConfigMap itself that causes different porti
 
 Create the Services from the `mysql-services.yaml` YAML configuration file:
 ```
-kubectl create -f mysql-services.yaml
+$ kubectl create -f mysql-services.yaml
 ```
 
 The Headless Service provides a home for the DNS entries that the StatefulSet controller creates for each Pod that’s part of the set. Because the Headless Service is named `mysql`, the Pods are accessible by resolving `<pod-name>.mysql` from within any other Pod in the same Kubernetes cluster and namespace.
@@ -34,7 +34,7 @@ Note that only read queries can use the load-balanced Client Service. Because th
 
 Finally, create the StatefulSet from the mysql-statefulset.yaml YAML configuration file:
 ```
-kubectl create -f mysql-statefulset.yaml
+$ kubectl create -f mysql-statefulset.yaml
 ```
 
 You can watch the startup progress by running: `kubectl get pods -l app=mysql --watch`
@@ -92,7 +92,7 @@ Lastly, after starting replication, the `xtrabackup` container listens for conne
 
 You can send test queries to the MySQL master (hostname `mysql-0.mysql`) by running a temporary container with the `mysql:5.7` image and running the mysql client binary.
 ```
-kubectl run mysql-client --image=mysql:5.7 -i --rm --restart=Never --\
+$ kubectl run mysql-client --image=mysql:5.7 -i --rm --restart=Never --\
   mysql -h mysql-0.mysql <<EOF
 CREATE DATABASE test;
 CREATE TABLE test.messages (message VARCHAR(250));
@@ -102,7 +102,7 @@ EOF
 
 Use the hostname `mysql-read` to send test queries to any server that reports being Ready:
 ```
-kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
+$ kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
   mysql -h mysql-read -e "SELECT * FROM test.messages"
 ```
 
@@ -119,7 +119,7 @@ pod "mysql-client" deleted
 
 To demonstrate that the `mysql-read` Service distributes connections across servers, you can run `SELECT @@server_id` in a loop:
 ```
-kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --restart=Never --\
+$ kubectl run mysql-client-loop --image=mysql:5.7 -i -t --rm --restart=Never --\
   bash -ic "while sleep 1; do mysql -h mysql-read -e 'SELECT @@server_id,NOW()'; done"
 ```
 
@@ -154,7 +154,7 @@ The readiness probe for the `mysql` container runs the command `mysql -h 127.0.0
 
 One way to force this readiness probe to fail is to break that command:
 ```
-kubectl exec mysql-2 -c mysql -- mv /usr/bin/mysql /usr/bin/mysql.off
+$ kubectl exec mysql-2 -c mysql -- mv /usr/bin/mysql /usr/bin/mysql.off
 ```
 
 This reaches into the actual container’s filesystem for Pod `mysql-2` and renames the `mysql` command so the readiness probe can’t find it. After a few seconds, the Pod should report one of its containers as not Ready, which you can check by running: `kubectl get pod mysql-2`
@@ -169,14 +169,14 @@ At this point, you should see your `SELECT @@server_id` loop continue to run, al
 
 Now repair the Pod and it should reappear in the loop output after a few seconds:
 ```
-kubectl exec mysql-2 -c mysql -- mv /usr/bin/mysql.off /usr/bin/mysql
+$ kubectl exec mysql-2 -c mysql -- mv /usr/bin/mysql.off /usr/bin/mysql
 ```
 
 #### Delete Pods
 
 The StatefulSet also recreates Pods if they’re deleted, similar to what a ReplicaSet does for stateless Pods.
 ```
-kubectl delete pod mysql-2
+$ kubectl delete pod mysql-2
 ```
 
 The StatefulSet controller notices that no `mysql-2` Pod exists anymore, and creates a new one with the same name and linked to the same PersistentVolumeClaim. You should see server ID `102` disappear from the loop output for a while and then return on its own.
@@ -197,7 +197,7 @@ Then drain the Node by running the following command, which cordons it so no new
 
 This might impact other applications on the Node, so it’s best to **only do this in a test cluster**.
 ```
-kubectl drain <node-name> --force --delete-local-data --ignore-daemonsets
+$ kubectl drain <node-name> --force --delete-local-data --ignore-daemonsets
 ```
 
 Now you can watch as the Pod reschedules on a different Node: `kubectl get pod mysql-2 -o wide --watch`
@@ -229,7 +229,7 @@ Once they’re up, you should see server IDs `103` and `104` start appearing in 
 
 You can also verify that these new servers have the data you added before they existed:
 ```
-kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
+$ kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
   mysql -h mysql-3.mysql -e "SELECT * FROM test.messages"
 Waiting for pod default/mysql-client to be running, status is Pending, pod ready: false
 +---------+
@@ -258,30 +258,30 @@ data-mysql-4   Bound     pvc-500a9957-b1c5-11e6-93fa-42010a800002   10Gi       R
 
 If you don’t intend to reuse the extra PVCs, you can delete them:
 ```
-kubectl delete pvc data-mysql-3
-kubectl delete pvc data-mysql-4
+$ kubectl delete pvc data-mysql-3
+$ kubectl delete pvc data-mysql-4
 ```
 
 ### Cleaning up
 
 Cancel the `SELECT @@server_id` loop by pressing **Ctrl+C** in its terminal, or running the following from another terminal:
 ```
-kubectl delete pod mysql-client-loop --now
+$ kubectl delete pod mysql-client-loop --now
 ```
 
 Delete the StatefulSet. This also begins terminating the Pods.
 ```
-kubectl delete statefulset mysql
+$ kubectl delete statefulset mysql
 ```
 
 Verify that the Pods disappear. They might take some time to finish terminating.
 ```
-kubectl get pods -l app=mysql
+$ kubectl get pods -l app=mysql
 ```
 
 You’ll know the Pods have terminated when the above returns: `No resources found.`
 
 Delete the ConfigMap, Services, and PersistentVolumeClaims.
 ```
-kubectl delete configmap,service,pvc -l app=mysql
+$ kubectl delete configmap,service,pvc -l app=mysql
 ```

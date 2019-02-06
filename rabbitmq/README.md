@@ -4,16 +4,17 @@ The following should be all you need to test the deployment of a RabbitMQ statef
 
 Create erlang cookie/secret:
 ```
-kubectl create secret generic rabbitmq-config --from-literal=erlang-cookie=rabbitmq-linstor-123
+$ kubectl create secret generic rabbitmq-config --from-literal=erlang-cookie=rabbitmq-linstor-123
 ```
 
 Create the StatefulSet:
 ```
-kubectl apply -f rabbitmq-statefulset.yaml
+$ kubectl apply -f rabbitmq-statefulset.yaml
 ```
 
 ## Cleanup
-
-kubectl delete -f rabbitmq-statefulset.yaml
-kubectl delete secrets rabbitmq-config
-kubectl delete pvc -l app=rabbitmq
+```
+$ kubectl delete -f rabbitmq-statefulset.yaml
+$ kubectl delete secrets rabbitmq-config
+$ kubectl delete pvc -l app=rabbitmq
+```
