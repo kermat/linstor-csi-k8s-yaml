@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sysbench-oltp
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+      - name: sysbench-oltp
+        image: kermat/debian-sysbench:0.1.2
+        command: ["/bin/bash", "-c", "/usr/bin/sysbench /usr/share/sysbench/tests/include/oltp_legacy/oltp.lua --threads=4 --mysql-host=mysql-0.mysql --mysql-user=root --mysql-port=3306 --tables=10 --table-size=1000000 prepare && /usr/bin/sysbench /usr/share/sysbench/tests/include/oltp_legacy/oltp.lua --threads=16 --events=0 --time=300 --mysql-host=mysql-0.mysql --mysql-user=root --mysql-port=3306 --tables=10 --table-size=1000000 --range_selects=off --db-ps-mode=disable --report-interval=1 run"]
+      restartPolicy: Never
+  backoffLimit: 4
