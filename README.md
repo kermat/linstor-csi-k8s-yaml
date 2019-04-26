@@ -15,7 +15,7 @@ metadata:
 parameters:
   autoplace: "1"
   storagePool: "thin-lvm"
-provisioner: io.drbd.linstor-csi
+provisioner: linstor.csi.linbit.com
 reclaimPolicy: Delete
 ```
 
