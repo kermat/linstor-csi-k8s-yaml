@@ -2,7 +2,7 @@
 
 This repository has YAML definitions used to deploy demonstration applications onto [LINSTOR](https://github.com/LINBIT/linstor-csi) provisioned volumes in Kubernetes. These definitions are for demonstration purposes only, and do not follow best practices in terms of security for production use.
 
-Since Kubernetes and LINSTOR can be configured in countless ways, these YAML definitions will assume that you have setup the [LINSTOR CSI plugin](https://github.com/LINBIT/linstor-csi) for Kubernetes, have a LINSTOR storage pool named `thin-lvm`, and have created a default storage class in Kubernetes named `csi-one-replica-autoplace-thin-lvm`. 
+Since Kubernetes and LINSTOR can be configured in countless ways, these YAML definitions will assume that you have setup the [LINSTOR CSI plugin](https://github.com/LINBIT/linstor-csi) for Kubernetes, have a LINSTOR storage pool named `thin-lvm`, and have created a storage class in Kubernetes named `csi-one-replica-autoplace-thin-lvm`. 
 
 Use the following YAML (included in sc.yaml) to define the assumed storage class, or adjust it for your environment:
 ```
