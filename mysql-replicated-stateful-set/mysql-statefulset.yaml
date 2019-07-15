@@ -160,10 +160,10 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: data
-      annotations:
-        storageClassName: csi-one-replica-autoplace-thin-lvm
     spec:
-      accessModes: ["ReadWriteOnce"]
+      storageClassName: thin-lvm
+      accessModes: 
+        - ReadWriteOnce
       resources:
         requests:
-          storage: 4Gi
+          storage: 5G
