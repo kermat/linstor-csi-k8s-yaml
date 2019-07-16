@@ -32,7 +32,8 @@ $ pods=$(kubectl get pods --selector=job-name=sysbench-oltp --output=jsonpath={.
 $ kubectl logs $pods
 ```
 
-Finally, delete the job:
+Finally, delete the job and test database:
 ```
 $ kubectl delete jobs.batch sysbench-oltp
+$ kubectl exec -it mysql-0 -- /usr/bin/mysql -u root -e 'drop database sbtest;'
 ```
