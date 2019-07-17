@@ -161,7 +161,7 @@ spec:
   - metadata:
       name: data
     spec:
-      storageClassName: thin-lvm
+      storageClassName: csi-one-replica-autoplace-thin-lvm
       accessModes: 
         - ReadWriteOnce
       resources:
