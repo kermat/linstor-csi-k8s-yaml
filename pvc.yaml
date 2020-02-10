@@ -3,7 +3,7 @@ apiVersion: v1
 metadata:
   name: demo-vol-claim-0
 spec:
-  storageClassName: csi-one-replica-autoplace-thin-lvm
+  storageClassName: linstor-csi-thin-lvm-r1
   accessModes:
     - ReadWriteOnce
   resources:

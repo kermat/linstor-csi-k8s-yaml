@@ -48,7 +48,7 @@ mysql-1   2/2       Running   0          1m
 mysql-2   2/2       Running   0          1m
 ```
 
-Press **Ctrl+C** to cancel the watch. If you don’t see any progress, make sure you have the `csi-one-replica-autoplace-thin-lvm` storage class defined, as mentioned in the prerequisites.
+Press **Ctrl+C** to cancel the watch. If you don’t see any progress, make sure you have the `linstor-csi-thin-lvm-r1` storage class defined, as mentioned in the prerequisites.
 
 This manifest uses a variety of techniques for managing stateful Pods as part of a StatefulSet. The next section highlights some of these techniques to explain what happens as the StatefulSet creates Pods.
 

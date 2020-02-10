@@ -83,7 +83,7 @@ spec:
   - metadata:
       name: rabbitmq
       annotations:
-        volume.beta.kubernetes.io/storage-class: csi-one-replica-autoplace-thin-lvm
+        volume.beta.kubernetes.io/storage-class: linstor-csi-thin-lvm-r1
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:

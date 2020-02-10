@@ -40,10 +40,10 @@ Get the status of underlying persistent volumes used by Redis StatefulSet:
 
 ```bash
 $ kubectl get pvc
-NAME           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                         AGE
-datadir-rd-0   Bound    pvc-d180347e-2658-11e9-8b47-a4badb334bb6   954Mi      RWO            csi-one-replica-autoplace-thin-lvm   7m21s
-datadir-rd-1   Bound    pvc-024f7008-2659-11e9-8b47-a4badb334bb6   954Mi      RWO            csi-one-replica-autoplace-thin-lvm   5m59s
-datadir-rd-2   Bound    pvc-2f69bb1c-2659-11e9-8b47-a4badb334bb6   954Mi      RWO            csi-one-replica-autoplace-thin-lvm   4m43s
+NAME           STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS              AGE
+datadir-rd-0   Bound    pvc-d180347e-2658-11e9-8b47-a4badb334bb6   954Mi      RWO            linstor-csi-thin-lvm-r1   7m21s
+datadir-rd-1   Bound    pvc-024f7008-2659-11e9-8b47-a4badb334bb6   954Mi      RWO            linstor-csi-thin-lvm-r1   5m59s
+datadir-rd-2   Bound    pvc-2f69bb1c-2659-11e9-8b47-a4badb334bb6   954Mi      RWO            linstor-csi-thin-lvm-r1   4m43s
 ```
 
 Get the status of the services:

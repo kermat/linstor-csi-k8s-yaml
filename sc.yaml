@@ -1,7 +1,7 @@
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
-  name: "csi-one-replica-autoplace-thin-lvm"
+  name: "linstor-csi-thin-lvm-r1"
 provisioner: linstor.csi.linbit.com
 parameters:
   autoPlace: "1"
