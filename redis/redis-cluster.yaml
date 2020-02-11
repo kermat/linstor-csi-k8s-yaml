@@ -26,7 +26,7 @@ spec:
     app: redis-replica
 
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: redis-master
@@ -63,7 +63,7 @@ spec:
           storage: 5G
 
 ---
-apiVersion: apps/v1beta1
+apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: redis-replica
