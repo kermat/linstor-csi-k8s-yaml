@@ -21,8 +21,8 @@ kubernetes      ClusterIP   10.96.0.1     <none>        443/TCP          18d
 minio-service   NodePort    10.96.30.40   <none>        9000:32701/TCP   10m
 
 $ kubectl get pvc
-NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS                         AGE
-minio-pv-claim   Bound    pvc-88a43d72-267b-11e9-8b47-a4badb334bb6   10Gi       RWO            csi-one-replica-autoplace-thin-lvm   10m
+NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS              AGE
+minio-pv-claim   Bound    pvc-88a43d72-267b-11e9-8b47-a4badb334bb6   10Gi       RWO            linstor-csi-thin-lvm-r1   10m
 ```
 
 ### Verify you can upload data to Minio

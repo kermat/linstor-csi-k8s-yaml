@@ -44,7 +44,7 @@ metadata:
   labels:
     app: minio-storage-claim
 spec:
-  storageClassName: csi-one-replica-autoplace-thin-lvm
+  storageClassName: linstor-csi-thin-lvm-r1
   accessModes:
     - ReadWriteOnce
   resources:
