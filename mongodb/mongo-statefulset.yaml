@@ -51,7 +51,7 @@ spec:
  - metadata:
      name: mongo-persistent-storage
    spec:
-     storageClassName: linstor-csi-thin-lvm-r1
+     storageClassName: linstor-csi-lvm-thin-r1
      accessModes:
        - ReadWriteOnce
      resources:

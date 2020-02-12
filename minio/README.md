@@ -22,7 +22,7 @@ minio-service   NodePort    10.96.30.40   <none>        9000:32701/TCP   10m
 
 $ kubectl get pvc
 NAME             STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS              AGE
-minio-pv-claim   Bound    pvc-88a43d72-267b-11e9-8b47-a4badb334bb6   10Gi       RWO            linstor-csi-thin-lvm-r1   10m
+minio-pv-claim   Bound    pvc-88a43d72-267b-11e9-8b47-a4badb334bb6   10Gi       RWO            linstor-csi-lvm-thin-r1   10m
 ```
 
 ### Verify you can upload data to Minio
