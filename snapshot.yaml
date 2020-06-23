@@ -1,0 +1,8 @@
+apiVersion: snapshot.storage.k8s.io/v1beta1
+kind: VolumeSnapshot
+metadata:
+  name: snap-demo-vol-claim-0
+spec:
+  volumeSnapshotClassName: linstor-csi-snapshot-class
+  source:
+    persistentVolumeClaimName: demo-vol-claim-0
