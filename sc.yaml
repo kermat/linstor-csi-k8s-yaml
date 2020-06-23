@@ -7,3 +7,23 @@ parameters:
   autoPlace: "1"
   storagePool: "lvm-thin"
 reclaimPolicy: Delete
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "linstor-csi-lvm-thin-r2"
+provisioner: linstor.csi.linbit.com
+parameters:
+  autoPlace: "2"
+  storagePool: "lvm-thin"
+reclaimPolicy: Delete
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: "linstor-csi-lvm-thin-r3"
+provisioner: linstor.csi.linbit.com
+parameters:
+  autoPlace: "3"
+  storagePool: "lvm-thin"
+reclaimPolicy: Delete
