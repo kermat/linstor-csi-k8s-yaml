@@ -1,0 +1,64 @@
+---
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: drbd-exporter
+spec:
+  selector:
+    matchLabels:
+      app: drbd-exporter
+  template:
+    metadata:
+      labels:
+        app: drbd-exporter
+    spec:
+      imagePullSecrets:
+        - name: drbdiocred
+      hostNetwork: true
+      containers:
+        - name: drbd-exporter
+          image: 'drbd.io/drbd-reactor:v0.3.0'
+          ports:
+            - hostPort: 9942
+              containerPort: 9942
+              protocol: TCP
+          resources: {}
+          volumeMounts:
+            - name: drbd-exporter-config
+              mountPath: /etc/drbd-reactor.d
+      volumes:
+        - name: drbd-exporter-config
+          configMap:
+            name: drbd-exporter
+            defaultMode: 420
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          operator: Exists
+          effect: NoSchedule
+---
+apiVersion: v1
+data:
+  prometheus.toml: |
+    [[prometheus]]
+    enums = true
+    address = "0.0.0.0:9942"
+kind: ConfigMap
+metadata:
+  name: drbd-exporter
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: drbd-exporter
+  name: drbd-exporter
+spec:
+  clusterIP: None
+  ports:
+  - name: "prometheus"
+    port: 9942
+    protocol: TCP
+    targetPort: 9942
+  selector:
+    app: drbd-exporter
+  type: ClusterIP
