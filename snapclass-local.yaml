@@ -1,6 +1,6 @@
-apiVersion: snapshot.storage.k8s.io/v1beta1
+apiVersion: snapshot.storage.k8s.io/v1
 kind: VolumeSnapshotClass
 metadata:
-  name: linstor-csi-snapshot-class
+  name: linstor-csi-snapshot-class-local
 driver: linstor.csi.linbit.com
 deletionPolicy: Delete
