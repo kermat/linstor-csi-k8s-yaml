@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-pod-0
+  namespace: default
+spec:
+  containers:
+  - name: demo-pod-0
+    image: busybox
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 1000s; done"]
+    volumeMounts:
+      - mountPath: "/data"
+        name: demo-vol
+  volumes:
+    - name: demo-vol
+      persistentVolumeClaim:
+        claimName: demo-vol-claim-0
