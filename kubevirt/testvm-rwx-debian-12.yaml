@@ -1,0 +1,24 @@
+apiVersion: kubevirt.io/v1
+kind: VirtualMachine
+metadata:
+  name: testvm-rwx-debian-12
+spec:
+  runStrategy: Manual
+  template:
+    metadata:
+      annotations:
+        kubevirt.io/allow-pod-bridge-network-live-migration: v1
+    spec:
+      domain:
+        devices:
+          disks:
+            - name: disk0
+              disk:
+                bus: virtio
+        resources:
+          requests:
+            memory: 2Gi
+      volumes:
+      - dataVolume:
+          name: dv-debian-12
+        name: disk0

@@ -1,0 +1,16 @@
+apiVersion: cdi.kubevirt.io/v1beta1
+kind: DataVolume
+metadata:
+  name: "dv-debian-12"
+spec:
+  storage:
+    resources:
+      requests:
+        storage: 4Gi
+    accessModes:
+      - ReadWriteMany
+    volumeMode: Block
+    storageClassName: linstor-basic-kubevirt-storage-class
+  source:
+    http:
+      url: "https://cdimage.debian.org/images/cloud/bookworm/latest/debian-12-nocloud-amd64.qcow2"

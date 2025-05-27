@@ -1,0 +1,14 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  # The name used to identify this StorageClass in Kubernetes.
+  name: linstor-basic-kubevirt-storage-class
+  # The name used to match this StorageClass with a provisioner.
+  # linstor.csi.linbit.com is the name that the LINSTOR CSI plugin uses to identify itself
+provisioner: linstor.csi.linbit.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  autoPlace: "3"
+  storagePool: "lvm-thin"
+  resourceGroup: "kubevirt-sc-rg"
