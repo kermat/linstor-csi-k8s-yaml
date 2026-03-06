@@ -1,0 +1,112 @@
+---
+# Headless service for inter-broker and controller communication.
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - port: 9092
+    name: plaintext
+  - port: 9093
+    name: controller
+  selector:
+    app: kafka
+---
+# Client-facing service for producers and consumers.
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-client
+  labels:
+    app: kafka
+spec:
+  ports:
+  - port: 9092
+    name: plaintext
+  selector:
+    app: kafka
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kafka
+spec:
+  serviceName: kafka
+  replicas: 3
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+      - name: kafka
+        image: apache/kafka:3.9.0
+        # Dynamically set per-pod KAFKA_NODE_ID and KAFKA_ADVERTISED_LISTENERS
+        # based on pod ordinal, then hand off to the standard entrypoint.
+        command:
+        - bash
+        - -c
+        - |
+          ORDINAL=${HOSTNAME##*-}
+          export KAFKA_NODE_ID=$((ORDINAL + 1))
+          export KAFKA_ADVERTISED_LISTENERS="PLAINTEXT://${HOSTNAME}.kafka:9092"
+          exec /etc/kafka/docker/run
+        env:
+        - name: KAFKA_PROCESS_ROLES
+          value: "broker,controller"
+        - name: KAFKA_LISTENERS
+          value: "PLAINTEXT://:9092,CONTROLLER://:9093"
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
+          value: "PLAINTEXT"
+        - name: KAFKA_CONTROLLER_LISTENER_NAMES
+          value: "CONTROLLER"
+        - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+          value: "1@kafka-0.kafka:9093,2@kafka-1.kafka:9093,3@kafka-2.kafka:9093"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR
+          value: "3"
+        - name: KAFKA_TRANSACTION_STATE_LOG_MIN_ISR
+          value: "2"
+        - name: KAFKA_LOG_DIRS
+          value: "/var/lib/kafka/data"
+        # Pre-generated KRaft cluster ID. To generate a new one:
+        #   docker run --rm apache/kafka:3.9.0 kafka-storage.sh random-uuid
+        - name: CLUSTER_ID
+          value: "q1Vs3413QkK7g8wfGMYn_g"
+        ports:
+        - containerPort: 9092
+          name: plaintext
+        - containerPort: 9093
+          name: controller
+        readinessProbe:
+          tcpSocket:
+            port: 9092
+          initialDelaySeconds: 30
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: kafka-data
+          mountPath: /var/lib/kafka/data
+          subPath: kafka-logs
+  volumeClaimTemplates:
+  - metadata:
+      name: kafka-data
+    spec:
+      storageClassName: linstor-csi-lvm-thin-r1
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10G

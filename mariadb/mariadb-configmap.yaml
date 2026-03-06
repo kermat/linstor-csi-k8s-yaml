@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mariadb-config
+  labels:
+    app: mariadb
+data:
+  primary.cnf: |
+    [mariadb]
+    log-bin
+    log-basename = mariadb
+    server_id    = 1
+  replica.cnf: |
+    [mariadb]
+    read_only
+  init.sql: |
+    CREATE USER IF NOT EXISTS 'replication'@'%' IDENTIFIED BY 'replication_password';
+    GRANT REPLICATION SLAVE ON *.* TO 'replication'@'%';
+    FLUSH PRIVILEGES;

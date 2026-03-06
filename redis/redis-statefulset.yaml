@@ -15,70 +15,52 @@ spec:
       labels:
         app: redis
     spec:
+      securityContext:
+        fsGroup: 999
       initContainers:
-      - name: install
-        image: gcr.io/google_containers/redis-install-3.2.0:e2e
-        imagePullPolicy: Always
+      - name: config
+        image: redis:7
+        command: ["sh", "-c"]
         args:
-        - "--install-into=/opt"
-        - "--work-dir=/work-dir"
+        - |
+          ORDINAL=$(hostname | rev | cut -d- -f1 | rev)
+          if [ "$ORDINAL" = "0" ]; then
+            echo "appendonly yes" > /etc/redis/redis.conf
+          else
+            echo "appendonly yes" > /etc/redis/redis.conf
+            echo "replicaof rd-0.redis 6379" >> /etc/redis/redis.conf
+          fi
         volumeMounts:
-        - name: opt
-          mountPath: "/opt"
-        - name: workdir
-          mountPath: "/work-dir"
-      - name: bootstrap
-        image: debian:jessie
-        command:
-        - "/work-dir/peer-finder"
-        args:
-        - -on-start="/work-dir/on-start.sh"
-        - "-service=redis"
-        env:
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              apiVersion: v1
-              fieldPath: metadata.namespace
-        volumeMounts:
-        - name: opt
-          mountPath: "/opt"
-        - name: workdir
-          mountPath: "/work-dir"
+        - name: config
+          mountPath: /etc/redis
       containers:
       - name: redis
-        image: debian:jessie
+        image: redis:7
+        command: ["redis-server", "/etc/redis/redis.conf"]
         ports:
         - containerPort: 6379
           name: peer
-        command:
-        - /opt/redis/redis-server
-        args:
-        - /opt/redis/redis.conf
         readinessProbe:
           exec:
             command:
             - sh
             - -c
-            - "/opt/redis/redis-cli -h $(hostname) ping"
+            - "redis-cli -h $(hostname) ping"
           initialDelaySeconds: 15
           timeoutSeconds: 5
         volumeMounts:
         - name: datadir
           mountPath: /data
-        - name: opt
-          mountPath: /opt
+        - name: config
+          mountPath: /etc/redis
       volumes:
-      - name: opt
-        emptyDir: {}
-      - name: workdir
+      - name: config
         emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: datadir
-      annotations:
-        volume.beta.kubernetes.io/storage-class: linstor-csi-lvm-thin-r1
     spec:
+      storageClassName: linstor-csi-lvm-thin-r1
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
@@ -88,8 +70,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
   name: redis
   labels:
     app: redis
@@ -98,6 +78,6 @@ spec:
   - port: 6379
     name: peer
   clusterIP: None
+  publishNotReadyAddresses: true
   selector:
     app: redis
-

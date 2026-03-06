@@ -42,6 +42,8 @@ spec:
       labels:
         app: redis-master
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
       - name: redis
         image: redis:latest
@@ -54,9 +56,8 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: redis-data
-      annotations:
-        volume.beta.kubernetes.io/storage-class: linstor-csi-lvm-thin-r1
     spec:
+      storageClassName: linstor-csi-lvm-thin-r1
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:
@@ -79,12 +80,14 @@ spec:
       labels:
         app: redis-replica
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
       - name: redis
         image: redis:latest
         args: [
           "--appendonly","yes" ,
-          "--slaveof", "redis-master", "6379"
+          "--replicaof", "redis-master", "6379"
           ]
         ports:
         - containerPort: 6379
@@ -94,9 +97,8 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: redis-data
-      annotations:
-        volume.beta.kubernetes.io/storage-class: linstor-csi-lvm-thin-r1
     spec:
+      storageClassName: linstor-csi-lvm-thin-r1
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:

@@ -27,6 +27,8 @@ spec:
       labels:
         app: redis-standalone
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
       - name: redis
         image: redis:latest
@@ -39,9 +41,8 @@ spec:
   volumeClaimTemplates:
   - metadata:
       name: redis-data
-      annotations:
-        volume.beta.kubernetes.io/storage-class: linstor-csi-lvm-thin-r1
     spec:
+      storageClassName: linstor-csi-lvm-thin-r1
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:

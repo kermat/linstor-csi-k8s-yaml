@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: cassandra
-        image: gcr.io/google-samples/cassandra:v11
+        image: cassandra:5
         imagePullPolicy: Always
         ports:
         - containerPort: 7000
@@ -49,7 +49,7 @@ spec:
           - name: HEAP_NEWSIZE
             value: 100M
           - name: CASSANDRA_SEEDS
-            value: "cassandra-0.cassandra.default.svc.cluster.local"
+            value: "cassandra-0.cassandra"
           - name: CASSANDRA_CLUSTER_NAME
             value: "K8Demo"
           - name: CASSANDRA_DC
@@ -67,7 +67,7 @@ spec:
             command:
             - /bin/bash
             - -c
-            - /ready-probe.sh
+            - "nodetool status | grep -E \"^UN\\s+$POD_IP\""
           initialDelaySeconds: 15
           timeoutSeconds: 5
         # These volume mounts are persistent. They are like inline claims,
@@ -75,13 +75,12 @@ spec:
         # the stateful pod volumes.
         volumeMounts:
         - name: cassandra-data
-          mountPath: /cassandra_data
+          mountPath: /var/lib/cassandra
   volumeClaimTemplates:
   - metadata:
       name: cassandra-data
-      annotations:
-        volume.beta.kubernetes.io/storage-class: linstor-csi-lvm-thin-r1
     spec:
+      storageClassName: linstor-csi-lvm-thin-r1
       accessModes: [ "ReadWriteOnce" ]
       resources:
         requests:

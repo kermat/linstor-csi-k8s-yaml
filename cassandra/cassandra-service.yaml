@@ -6,6 +6,7 @@ metadata:
   name: cassandra
 spec:
   clusterIP: None
+  publishNotReadyAddresses: true
   ports:
   - port: 9042
   selector:

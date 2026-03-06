@@ -17,7 +17,7 @@ spec:
       hostNetwork: true
       containers:
         - name: drbd-exporter
-          image: 'drbd.io/drbd-reactor:v0.3.0'
+          image: 'drbd.io/drbd-reactor:v1.4.0'
           ports:
             - hostPort: 9942
               containerPort: 9942
@@ -32,6 +32,9 @@ spec:
             name: drbd-exporter
             defaultMode: 420
       tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
         - key: node-role.kubernetes.io/master
           operator: Exists
           effect: NoSchedule

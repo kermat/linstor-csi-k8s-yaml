@@ -1,0 +1,180 @@
+---
+# Headless service for primary StatefulSet DNS (writes go to mariadb-primary-0.mariadb-primary).
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-primary
+  labels:
+    app: mariadb
+    role: primary
+spec:
+  clusterIP: None
+  ports:
+  - port: 3306
+    name: mysql
+  selector:
+    app: mariadb
+    role: primary
+---
+# Client service for read traffic across all replicas.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-replicas
+  labels:
+    app: mariadb
+    role: replica
+spec:
+  ports:
+  - port: 3306
+    name: mysql
+  selector:
+    app: mariadb
+    role: replica
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb-primary
+spec:
+  serviceName: mariadb-primary
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mariadb
+      role: primary
+  template:
+    metadata:
+      labels:
+        app: mariadb
+        role: primary
+    spec:
+      containers:
+      - name: mariadb
+        image: mariadb:11
+        env:
+        - name: MARIADB_ROOT_PASSWORD
+          value: mariadb
+        - name: MARIADB_DATABASE
+          value: demo
+        ports:
+        - containerPort: 3306
+          name: mysql
+        readinessProbe:
+          exec:
+            command: ["mariadb", "-h", "127.0.0.1", "-pmariadb", "-e", "SELECT 1"]
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        - name: config
+          mountPath: /etc/mysql/conf.d/primary.cnf
+          subPath: primary.cnf
+        - name: init
+          mountPath: /docker-entrypoint-initdb.d/init.sql
+          subPath: init.sql
+      volumes:
+      - name: config
+        configMap:
+          name: mariadb-config
+      - name: init
+        configMap:
+          name: mariadb-config
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      storageClassName: linstor-csi-lvm-thin-r1
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10G
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mariadb-replica
+spec:
+  serviceName: mariadb-replicas
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mariadb
+      role: replica
+  template:
+    metadata:
+      labels:
+        app: mariadb
+        role: replica
+    spec:
+      initContainers:
+      # Write a per-pod server_id (100 + ordinal) into a shared conf.d volume
+      # so each replica has a unique ID as required by MariaDB replication.
+      - name: set-server-id
+        image: mariadb:11
+        command:
+        - bash
+        - -c
+        - |
+          ORDINAL=${HOSTNAME##*-}
+          printf '[mariadb]\nserver_id=%d\n' "$((100 + ORDINAL))" \
+            > /etc/mysql/conf.d/server-id.cnf
+          cp /config/replica.cnf /etc/mysql/conf.d/replica.cnf
+        volumeMounts:
+        - name: conf-d
+          mountPath: /etc/mysql/conf.d
+        - name: config
+          mountPath: /config
+      containers:
+      - name: mariadb
+        image: mariadb:11
+        env:
+        - name: MARIADB_ROOT_PASSWORD
+          value: mariadb
+        ports:
+        - containerPort: 3306
+          name: mysql
+        readinessProbe:
+          exec:
+            command: ["mariadb", "-h", "127.0.0.1", "-pmariadb", "-e", "SELECT 1"]
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+        lifecycle:
+          postStart:
+            exec:
+              command:
+              - bash
+              - -c
+              - |
+                until mariadb -h 127.0.0.1 -pmariadb -e "SELECT 1" 2>/dev/null; do sleep 2; done
+                mariadb -h 127.0.0.1 -pmariadb -e "
+                  CHANGE MASTER TO
+                    MASTER_HOST='mariadb-primary-0.mariadb-primary',
+                    MASTER_USER='replication',
+                    MASTER_PASSWORD='replication_password',
+                    MASTER_USE_GTID=slave_pos;
+                  START SLAVE;
+                " || true
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        - name: conf-d
+          mountPath: /etc/mysql/conf.d
+      volumes:
+      - name: config
+        configMap:
+          name: mariadb-config
+      - name: conf-d
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      storageClassName: linstor-csi-lvm-thin-r1
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10G

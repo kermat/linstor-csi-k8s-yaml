@@ -1,0 +1,97 @@
+---
+# publishNotReadyAddresses allows pods to resolve each other's DNS before
+# they pass their readiness probe, which is required for replica set init.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  ports:
+  - port: 27017
+    name: mongodb
+  selector:
+    app: mongodb
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+spec:
+  serviceName: mongodb
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:7
+        args: [ "--replSet", "rs0", "--bind_ip_all" ]
+        ports:
+        - containerPort: 27017
+          name: mongodb
+        readinessProbe:
+          exec:
+            command:
+            - mongosh
+            - --eval
+            - "db.adminCommand('ping')"
+            - --quiet
+          initialDelaySeconds: 10
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: mongo-data
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: mongo-data
+    spec:
+      storageClassName: linstor-csi-lvm-thin-r1
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10G
+---
+# One-shot Job that waits for all 3 pods to accept connections, then
+# calls rs.initiate(). Apply this after the StatefulSet is deployed.
+# Re-running is safe: rs.initiate() on an already-initialised set is a no-op.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mongodb-replicaset-init
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: init
+        image: mongo:7
+        command:
+        - bash
+        - -c
+        - |
+          for host in mongodb-0.mongodb mongodb-1.mongodb mongodb-2.mongodb; do
+            until mongosh --host $host --eval "db.adminCommand('ping')" --quiet 2>/dev/null; do
+              echo "Waiting for $host..."; sleep 3
+            done
+          done
+          mongosh --host mongodb-0.mongodb --eval "
+            try {
+              rs.initiate({
+                _id: 'rs0',
+                members: [
+                  { _id: 0, host: 'mongodb-0.mongodb:27017' },
+                  { _id: 1, host: 'mongodb-1.mongodb:27017' },
+                  { _id: 2, host: 'mongodb-2.mongodb:27017' }
+                ]
+              })
+            } catch(e) { print(e) }
+          "
